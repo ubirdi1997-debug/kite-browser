@@ -467,7 +467,7 @@ export function DesktopKite() {
       {/* Window Top Header / Tabs */}
       <div className="h-12 bg-[#101217] flex items-center px-4 border-b border-[#2A2E35] shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Window Controls */}
-        <div className="hidden md:flex gap-2 mr-6 group relative">
+        <div className="hidden md:flex gap-2 mr-6 group relative shrink-0">
           <button className="w-3.5 h-3.5 rounded-full bg-[#ff5f56] flex items-center justify-center border border-[#e0443e] overflow-hidden">
             <X className="w-2.5 h-2.5 text-black/60 opacity-0 group-hover:opacity-100" />
           </button>
@@ -480,7 +480,7 @@ export function DesktopKite() {
         </div>
 
         {/* Reorderable Tabs & Islands */}
-        <Reorder.Group axis="x" values={tabs} onReorder={setTabs} className="flex gap-2 flex-1 min-w-max">
+        <Reorder.Group axis="x" values={tabs} onReorder={setTabs} className="flex gap-2 min-w-0">
           {tabs.map((item) => (
             <Reorder.Item
               key={item.id}
@@ -509,7 +509,7 @@ export function DesktopKite() {
 
         <button 
           onClick={addNewTab}
-          className="flex items-center justify-center w-[34px] h-[34px] rounded-xl hover:bg-[#181A22] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors border border-transparent hover:border-[#2A2E35]"
+          className="flex items-center justify-center shrink-0 ml-2 w-[34px] h-[34px] rounded-xl hover:bg-[#181A22] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors border border-transparent hover:border-[#2A2E35]"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -693,13 +693,17 @@ export function DesktopKite() {
             <div className="relative">
               <button 
                 onClick={() => setUauthOpen(!uAuthOpen)}
-                className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[#181A22] group transition-colors relative overflow-hidden"
+                className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[#181A22] group transition-colors relative"
               >
-                <div className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#0E0E10] z-10 ${isLoggedIn ? 'bg-[#52B788]' : 'bg-[#8D99AE]'}`} />
                 {isLoggedIn ? (
-                  <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="w-full h-full object-cover" />
+                  <div className="w-5 h-5 rounded-full overflow-hidden ring-2 ring-[#52B788] ring-offset-2 ring-offset-[#101217]">
+                    <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="w-full h-full object-cover" />
+                  </div>
                 ) : (
-                  <UserCircle2 className="w-5 h-5 text-[#8D99AE]" strokeWidth={2} />
+                  <>
+                    <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#0E0E10] z-10 bg-[#8D99AE]" />
+                    <UserCircle2 className="w-5 h-5 text-[#8D99AE]" strokeWidth={2} />
+                  </>
                 )}
               </button>
               
