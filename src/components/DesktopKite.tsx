@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
-import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar, UserCircle2, Terminal } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar, UserCircle2, Terminal, Minus, Square } from 'lucide-react';
 import { KiteLogo } from './KiteLogo';
 import { RamSaverChart, RamData } from './RamSaverChart';
 import { GestureCanvas } from './GestureCanvas';
@@ -426,28 +426,38 @@ export function DesktopKite() {
         e.preventDefault();
         setContextMenu({ x: e.clientX, y: e.clientY, tabId: tab.id });
       }}
-      className={`flex items-center gap-2 rounded-xl px-4 py-1.5 h-[34px] select-none relative transition-colors cursor-pointer ${
-        tab.active ? 'bg-[#181A22] min-w-[200px]' : 'bg-[#101217] min-w-[160px]'
+      className={`group flex items-center gap-2 rounded-xl px-4 py-1.5 h-[34px] select-none relative transition-colors cursor-pointer w-[200px] max-w-[200px] min-w-[60px] overflow-hidden ${
+        tab.active ? 'bg-[#181A22]' : 'bg-[#101217]'
       } ${
         isHeld
           ? (tab.active ? 'border-2 border-dashed border-[#DDA15E]/80 opacity-80' : 'border-2 border-dashed border-[#8D99AE]/60 opacity-80')
           : (tab.active ? 'border border-solid border-[#DDA15E]' : 'border border-solid border-[#2A2E35]')
       }`}
     >
-      {getFavicon(tab)}
-      <span className={`text-[11px] pointer-events-none truncate ${tab.active ? 'text-[#F4F4F9] font-semibold' : (tab.suspended ? 'text-[#8D99AE]/50 italic' : 'text-[#8D99AE]')}`}>
+      <div className="shrink-0">{getFavicon(tab)}</div>
+      <span className={`flex-1 text-[11px] pointer-events-none truncate ${tab.active ? 'text-[#F4F4F9] font-semibold' : (tab.suspended ? 'text-[#8D99AE]/50 italic' : 'text-[#8D99AE]')}`}>
         {tab.title}
       </span>
-      {tab.isSecret && <Ghost className="w-3.5 h-3.5 text-[#7E78D2] shrink-0 ml-1" />}
+      {tab.isSecret && (
+        <div className="flex items-center justify-center shrink-0 w-5 h-5 rounded-md bg-[#7E78D2]/10 border border-[#7E78D2]/20">
+          <VenetianMask className="w-3 h-3 text-[#7E78D2]" />
+        </div>
+      )}
       
-      <div className="ml-auto flex items-center gap-1 shrink-0 z-10">
-        {tab.active && !tab.isSecret && <div className="w-1.5 h-1.5 rounded-full bg-[#52B788]" />}
+      <div className="ml-auto flex items-center shrink-0 z-10 relative w-4 h-4">
+        {/* Active Dot (hides on hover to make room for X) */}
+        {tab.active && !tab.isSecret && (
+          <div className="absolute inset-0 flex items-center justify-center opacity-100 group-hover:opacity-0 transition-opacity">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#52B788]" />
+          </div>
+        )}
+        {/* Close Button (shows on hover) */}
         <button 
           onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
-          className="w-4 h-4 flex items-center justify-center rounded hover:bg-[#2A2E35] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors"
+          className="absolute inset-0 w-4 h-4 flex items-center justify-center rounded hover:bg-[#2A2E35] text-[#8D99AE] hover:text-[#F4F4F9] transition-all opacity-0 group-hover:opacity-100"
           title="Close Tab"
         >
-          <X className="w-2.5 h-2.5" />
+          <X className="w-3 h-3" />
         </button>
       </div>
     </div>
@@ -466,19 +476,6 @@ export function DesktopKite() {
       
       {/* Window Top Header / Tabs */}
       <div className="h-12 bg-[#101217] flex items-center px-4 border-b border-[#2A2E35] shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {/* Window Controls */}
-        <div className="hidden md:flex gap-2 mr-6 group relative shrink-0">
-          <button className="w-3.5 h-3.5 rounded-full bg-[#ff5f56] flex items-center justify-center border border-[#e0443e] overflow-hidden">
-            <X className="w-2.5 h-2.5 text-black/60 opacity-0 group-hover:opacity-100" />
-          </button>
-          <button className="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] flex items-center justify-center border border-[#dea123] overflow-hidden">
-            <span className="w-2 h-[2px] bg-black/60 opacity-0 group-hover:opacity-100" />
-          </button>
-          <button className="w-3.5 h-3.5 rounded-full bg-[#27c93f] flex items-center justify-center border border-[#1aab29] overflow-hidden">
-            <SplitSquareHorizontal className="w-2.5 h-2.5 text-black/60 opacity-0 group-hover:opacity-100 rotate-90" />
-          </button>
-        </div>
-
         {/* Reorderable Tabs & Islands */}
         <Reorder.Group axis="x" values={tabs} onReorder={setTabs} className="flex gap-2 min-w-0">
           {tabs.map((item) => (
@@ -492,7 +489,7 @@ export function DesktopKite() {
               animate={{ scale: heldTabId === item.id ? 0.98 : 1 }}
               transition={{ duration: 0.15 }}
               data-droppable-id={item.id}
-              className="cursor-grab active:cursor-grabbing select-none shrink-0 relative"
+              className="cursor-grab active:cursor-grabbing select-none shrink relative overflow-hidden"
             >
               {item.type === 'island' ? (
                 <div className="flex gap-1 p-1 bg-[#1A1D24] border border-[#2A2E35] rounded-[18px] items-center shadow-inner relative group">
@@ -513,6 +510,19 @@ export function DesktopKite() {
         >
           <Plus className="w-4 h-4" />
         </button>
+
+        {/* Window Controls (Native Windows Style) */}
+        <div className="ml-auto hidden md:flex items-center gap-1 shrink-0 pl-4">
+          <button className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#181A22] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors">
+            <Minus className="w-4 h-4" />
+          </button>
+          <button className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#181A22] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors">
+            <Square className="w-3.5 h-3.5" />
+          </button>
+          <button className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-500 hover:text-white text-[#8D99AE] transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Navigation & Omnibox Bar */}
@@ -1034,7 +1044,7 @@ export function DesktopKite() {
               className="flex items-center gap-2.5 w-full px-3 py-2 text-left rounded-lg hover:bg-[#181A22] group transition-colors"
             >
               <VenetianMask className="w-4 h-4 text-[#7E78D2]" />
-              <span className="text-[#F4F4F9] text-[11px] font-medium group-hover:text-[#7E78D2]">Secret Mode</span>
+              <span className="text-[#F4F4F9] text-[11px] font-medium group-hover:text-[#7E78D2]">Open in Secret Mode</span>
             </button>
             <button 
               onClick={() => {
@@ -1341,28 +1351,16 @@ export function DesktopKite() {
               <p className="text-[#8D99AE] text-[13px] text-center mb-8 leading-relaxed">
                 Sign up with your SSO provider to instantly sync your workspaces and establish your encrypted mesh session.
               </p>
-              <div className="w-full flex flex-col gap-3">
-                <button 
-                  onClick={() => {
-                    setIsLoggedIn(true);
-                    setShowTutorial(false);
-                  }}
-                  className="w-full py-3 bg-[#DDA15E] text-[#14161D] text-[13px] font-bold rounded-xl hover:bg-[#e0ae75] transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  <UserCircle2 className="w-5 h-5" />
-                  Continue with SSO
-                </button>
-                <button 
-                  onClick={() => {
-                    setIsLoggedIn(true);
-                    setShowTutorial(false);
-                  }}
-                  className="w-full py-3 bg-[#181A22] border border-[#2A2E35] text-[#F4F4F9] text-[13px] font-bold rounded-xl hover:bg-[#2A2E35] transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  <Terminal className="w-5 h-5 text-[#52B788]" />
-                  Connect using Firebase CLI
-                </button>
-              </div>
+              <button 
+                onClick={() => {
+                  setIsLoggedIn(true);
+                  setShowTutorial(false);
+                }}
+                className="w-full py-3 bg-[#DDA15E] text-[#14161D] text-[13px] font-bold rounded-xl hover:bg-[#e0ae75] transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <UserCircle2 className="w-5 h-5" />
+                Continue with SSO
+              </button>
             </div>
           </motion.div>
         )}
