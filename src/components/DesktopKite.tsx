@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
-import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar, UserCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar, UserCircle2, Terminal } from 'lucide-react';
 import { KiteLogo } from './KiteLogo';
 import { RamSaverChart, RamData } from './RamSaverChart';
 import { GestureCanvas } from './GestureCanvas';
@@ -693,10 +693,14 @@ export function DesktopKite() {
             <div className="relative">
               <button 
                 onClick={() => setUauthOpen(!uAuthOpen)}
-                className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[#181A22] group transition-colors relative"
+                className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[#181A22] group transition-colors relative overflow-hidden"
               >
-                <div className={`absolute top-2 right-2 w-2 h-2 rounded-full border-2 border-[#0E0E10] ${isLoggedIn ? 'bg-[#DDA15E]' : 'bg-[#8D99AE]'}`} />
-                <Fingerprint className={`w-5 h-5 ${isLoggedIn ? 'text-[#DDA15E]' : 'text-[#8D99AE]'}`} strokeWidth={2} />
+                <div className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#0E0E10] z-10 ${isLoggedIn ? 'bg-[#52B788]' : 'bg-[#8D99AE]'}`} />
+                {isLoggedIn ? (
+                  <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <UserCircle2 className="w-5 h-5 text-[#8D99AE]" strokeWidth={2} />
+                )}
               </button>
               
               <AnimatePresence>
@@ -1333,16 +1337,28 @@ export function DesktopKite() {
               <p className="text-[#8D99AE] text-[13px] text-center mb-8 leading-relaxed">
                 Sign up with your SSO provider to instantly sync your workspaces and establish your encrypted mesh session.
               </p>
-              <button 
-                onClick={() => {
-                  setIsLoggedIn(true);
-                  setShowTutorial(false);
-                }}
-                className="w-full py-3 bg-[#DDA15E] text-[#14161D] text-[13px] font-bold rounded-xl hover:bg-[#e0ae75] transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <UserCircle2 className="w-5 h-5" />
-                Continue with SSO
-              </button>
+              <div className="w-full flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    setIsLoggedIn(true);
+                    setShowTutorial(false);
+                  }}
+                  className="w-full py-3 bg-[#DDA15E] text-[#14161D] text-[13px] font-bold rounded-xl hover:bg-[#e0ae75] transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <UserCircle2 className="w-5 h-5" />
+                  Continue with SSO
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsLoggedIn(true);
+                    setShowTutorial(false);
+                  }}
+                  className="w-full py-3 bg-[#181A22] border border-[#2A2E35] text-[#F4F4F9] text-[13px] font-bold rounded-xl hover:bg-[#2A2E35] transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <Terminal className="w-5 h-5 text-[#52B788]" />
+                  Connect using Firebase CLI
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
