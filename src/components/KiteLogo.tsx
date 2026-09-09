@@ -27,8 +27,8 @@ export function KiteLogo({ className = "w-12 h-12" }: { className?: string }) {
           <stop offset="1" stopColor="#DDA15E" />
         </linearGradient>
         <linearGradient id="kite-bottom" x1="15" y1="40" x2="85" y2="95" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#14161D" />
-          <stop offset="1" stopColor="#0E0E10" />
+          <stop stopColor="#8D99AE" />
+          <stop offset="1" stopColor="#3D4351" />
         </linearGradient>
         <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="3" result="blur" />

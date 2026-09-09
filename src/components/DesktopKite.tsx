@@ -631,7 +631,7 @@ export function DesktopKite() {
           
           {/* Logo */}
           <div className="hidden md:flex shrink-0 mb-2">
-            <KiteLogo className="w-8 h-8" />
+            <KiteLogo className="w-10 h-10" />
           </div>
 
           {/* Workspaces */}

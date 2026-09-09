@@ -52,7 +52,7 @@ export function Installer() {
         </div>
 
         <div className="p-10 flex flex-col items-center">
-          <KiteLogo className="w-20 h-20 mb-6" />
+          <KiteLogo className="w-24 h-24 mb-6" />
           <h1 className="text-[#F4F4F9] text-2xl font-bold mb-2 text-center">Kite Browser</h1>
           <p className="text-[#8D99AE] text-sm text-center max-w-[320px] mb-10 leading-relaxed">
             The next-generation privacy-first workspace. Powered by the decentralized OpenClaw mesh network.
