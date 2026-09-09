@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar } from 'lucide-react';
+import { KiteLogo } from './KiteLogo';
+import { RamSaverChart, RamData } from './RamSaverChart';
+import { GestureCanvas } from './GestureCanvas';
 
 type BaseTab = { id: string; title: string; active: boolean; isSecret?: boolean; url: string; suspended?: boolean };
 type TabNode = BaseTab & { type: 'tab' };
@@ -37,6 +40,14 @@ const INITIAL_WORKSPACES = [
   { id: 'reference', icon: BookMarked, color: 'text-[#8D99AE]', bg: 'bg-[#8D99AE]/10', indicator: 'bg-[#8D99AE]' },
 ];
 
+// Default shortcuts
+const DEFAULT_SHORTCUTS = {
+  newTab: 't',
+  toggleAura: 'j',
+  nextWorkspace: ']',
+  prevWorkspace: '['
+};
+
 export function DesktopKite() {
   const [workspaces, setWorkspaces] = useState(INITIAL_WORKSPACES);
   const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
@@ -51,10 +62,16 @@ export function DesktopKite() {
   const [tabs, setTabs] = useState<WorkspaceItem[]>(WORKSPACE_TABS['work']);
   const [isTiledView, setIsTiledView] = useState(false);
   const [uAuthOpen, setUauthOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [vaultOpen, setVaultOpen] = useState(false);
+  const [ramSaverOpen, setRamSaverOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [snapshotSaved, setSnapshotSaved] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showTutorial, setShowTutorial] = useState(true);
+  
+  const [shortcuts, setShortcuts] = useState(DEFAULT_SHORTCUTS);
 
   const [gesture, setGesture] = useState<{
     active: boolean;
@@ -232,6 +249,37 @@ export function DesktopKite() {
     });
   };
 
+  // Keyboard Shortcuts Hook
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key === shortcuts.newTab) {
+          e.preventDefault();
+          addNewTab();
+        } else if (e.key === shortcuts.toggleAura) {
+          e.preventDefault();
+          setAuraOpen(prev => !prev);
+        } else if (e.key === shortcuts.nextWorkspace) {
+          e.preventDefault();
+          const currentIndex = workspaces.findIndex(w => w.id === activeWorkspace);
+          const nextIndex = (currentIndex + 1) % workspaces.length;
+          handleWorkspaceChange(workspaces[nextIndex].id);
+        } else if (e.key === shortcuts.prevWorkspace) {
+          e.preventDefault();
+          const currentIndex = workspaces.findIndex(w => w.id === activeWorkspace);
+          const prevIndex = (currentIndex - 1 + workspaces.length) % workspaces.length;
+          handleWorkspaceChange(workspaces[prevIndex].id);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [shortcuts, activeWorkspace, workspaces]);
+
   const handleDragEnd = (event: any, info: any, draggedItem: WorkspaceItem) => {
     setHeldTabId(null);
     
@@ -327,9 +375,31 @@ export function DesktopKite() {
   const handleMouseUp = (e: React.MouseEvent) => {
     if (e.button === 2 && gesture?.active) {
       if (gesture.action === 'back') {
-        // Handle back action (visual simulation)
+        const currentIdx = tabs.findIndex(t => {
+          if (t.type === 'island') return t.tabs.some(sub => sub.active);
+          return t.active;
+        });
+        if (currentIdx > 0) {
+          const prevTab = tabs[currentIdx - 1];
+          if (prevTab.type === 'island') {
+            activateTab(prevTab.tabs[0].id);
+          } else {
+            activateTab(prevTab.id);
+          }
+        }
       } else if (gesture.action === 'forward') {
-        // Handle forward action (visual simulation)
+        const currentIdx = tabs.findIndex(t => {
+          if (t.type === 'island') return t.tabs.some(sub => sub.active);
+          return t.active;
+        });
+        if (currentIdx < tabs.length - 1 && currentIdx !== -1) {
+          const nextTab = tabs[currentIdx + 1];
+          if (nextTab.type === 'island') {
+            activateTab(nextTab.tabs[0].id);
+          } else {
+            activateTab(nextTab.id);
+          }
+        }
       }
       setGesture(null);
     }
@@ -473,7 +543,7 @@ export function DesktopKite() {
           <div className="ml-auto bg-[#1E222D] rounded-full px-3 py-1 flex items-center gap-1.5 h-6">
             <Ghost className="w-3 h-3 text-[#7E78D2]" />
             <div className="w-1.5 h-1.5 rounded-full bg-[#3D8D8B]" />
-            <span className="font-mono text-[9px] text-[#3D8D8B] tracking-wide">ZURICH-04 Egress</span>
+            <span className="font-mono text-[7px] text-[#3D8D8B] tracking-wide opacity-80">ZURICH-04 Egress</span>
           </div>
         </div>
 
@@ -544,24 +614,20 @@ export function DesktopKite() {
                   </div>
                 )}
                 
-                {/* Trail SVG */}
-                <svg className="w-full h-full" style={{ filter: 'drop-shadow(0 0 4px rgba(126, 120, 210, 0.5))' }}>
-                  <polyline 
-                    points={gesture.path.map(p => `${p.x},${p.y}`).join(' ')}
-                    fill="none"
-                    stroke={gesture.action === 'back' ? '#DDA15E' : gesture.action === 'forward' ? '#52B788' : '#7E78D2'}
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="opacity-80"
-                  />
-                </svg>
+                {/* Trail Canvas */}
+                <GestureCanvas gesture={gesture} />
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Workspace & Social Sidebar (Desktop) / Bottom Nav (Mobile) */}
         <div className="md:w-[60px] w-full h-[60px] md:h-auto bg-[#0E0E10] border-t md:border-t-0 md:border-r border-[#2A2E35] flex flex-row md:flex-col items-center py-2 md:py-4 px-4 md:px-0 gap-4 md:gap-6 shrink-0 z-10 order-last md:order-first overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          
+          {/* Logo */}
+          <div className="hidden md:flex shrink-0 mb-2">
+            <KiteLogo className="w-8 h-8" />
+          </div>
+
           {/* Workspaces */}
           <div className="flex flex-row md:flex-col gap-3 w-full md:items-center">
             {workspaces.map((ws) => {
@@ -665,9 +731,71 @@ export function DesktopKite() {
               </AnimatePresence>
             </div>
 
-            <button className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[#181A22] group transition-colors" title="Browser Settings">
-              <Settings className="w-5 h-5 text-[#8D99AE] group-hover:text-[#F4F4F9]" strokeWidth={2} />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setSettingsOpen(!settingsOpen)}
+                className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[#181A22] group transition-colors" 
+                title="Browser Settings"
+              >
+                <Settings className="w-5 h-5 text-[#8D99AE] group-hover:text-[#F4F4F9]" strokeWidth={2} />
+              </button>
+
+              <AnimatePresence>
+                {settingsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-0 left-[60px] w-[240px] bg-[#101217] border border-[#2A2E35] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-2 z-50 flex flex-col gap-1"
+                  >
+                    <div className="px-3 py-2 border-b border-[#2A2E35] mb-1">
+                      <span className="text-[10px] text-[#8D99AE] font-mono tracking-wide uppercase">Preferences</span>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        setRamSaverOpen(true);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
+                      <Activity className="w-4 h-4 text-[#52B788]" />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#52B788]">RAM Saver</span>
+                        <span className="text-[9px] text-[#8D99AE]">Manage Memory Usage</span>
+                      </div>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        setVaultOpen(true);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
+                      <Lock className="w-4 h-4 text-[#7E78D2]" />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#7E78D2]">Security Vault</span>
+                        <span className="text-[9px] text-[#8D99AE]">Manage Passkeys & Passwords</span>
+                      </div>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        // Open shortcuts modal logic here
+                        setShortcutsOpen(true);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
+                      <Code className="w-4 h-4 text-[#DDA15E]" />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#DDA15E]">Keyboard Shortcuts</span>
+                        <span className="text-[9px] text-[#8D99AE]">Custom global hotkeys</span>
+                      </div>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
@@ -902,6 +1030,207 @@ export function DesktopKite() {
               <X className="w-4 h-4 text-[#8D99AE] group-hover:text-red-400" />
               <span className="text-[#F4F4F9] text-[11px] font-medium group-hover:text-red-400">Close Tab</span>
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Vault Modal */}
+      <AnimatePresence>
+        {vaultOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[120] backdrop-blur-sm bg-[#0E0E10]/80 flex items-center justify-center p-4"
+          >
+            <div className="w-full max-w-3xl bg-[#14161D] border border-[#2A2E35] rounded-[24px] overflow-hidden shadow-2xl flex flex-col h-[600px]">
+              {/* Header */}
+              <div className="h-16 border-b border-[#2A2E35] bg-[#101217] flex items-center px-6 justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#7E78D2]/10 border border-[#7E78D2]/30 flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-[#7E78D2]" />
+                  </div>
+                  <div>
+                    <h2 className="text-[#F4F4F9] text-sm font-bold">Security Vault</h2>
+                    <p className="text-[#8D99AE] text-[10px] font-mono">Protected by StrongBox Ed25519</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setVaultOpen(false)}
+                  className="w-8 h-8 rounded-full hover:bg-[#181A22] flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4 text-[#8D99AE]" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 flex overflow-hidden">
+                {/* Sidebar */}
+                <div className="w-48 border-r border-[#2A2E35] bg-[#101217] p-4 flex flex-col gap-2">
+                  <button className="flex items-center gap-3 px-3 py-2 bg-[#181A22] rounded-lg text-left">
+                    <Key className="w-4 h-4 text-[#DDA15E]" />
+                    <span className="text-[#F4F4F9] text-[12px] font-medium">Passkeys</span>
+                  </button>
+                  <button className="flex items-center gap-3 px-3 py-2 hover:bg-[#181A22] rounded-lg text-left transition-colors text-[#8D99AE] hover:text-[#F4F4F9]">
+                    <ShieldAlert className="w-4 h-4" />
+                    <span className="text-[12px] font-medium">Passwords</span>
+                  </button>
+                </div>
+
+                {/* Main List */}
+                <div className="flex-1 bg-[#14161D] p-6 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-[#F4F4F9] text-lg font-bold">Stored Passkeys</h3>
+                    <button className="px-3 py-1.5 bg-[#DDA15E] text-[#14161D] text-[11px] font-bold rounded-lg hover:bg-[#e0ae75] transition-colors flex items-center gap-2">
+                      <Plus className="w-3.5 h-3.5" />
+                      Import Passkey
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {[
+                      { site: 'github.com', username: 'alex.id', date: '2 days ago', type: 'Ed25519' },
+                      { site: 'aws.amazon.com', username: 'alex@work', date: '1 week ago', type: 'P-256' },
+                      { site: 'cloudflare.com', username: 'admin', date: '1 month ago', type: 'Ed25519' }
+                    ].map((key, i) => (
+                      <div key={i} className="flex items-center justify-between p-4 bg-[#181A22] border border-[#2A2E35] rounded-xl group hover:border-[#DDA15E]/30 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-[#101217] border border-[#2A2E35] flex items-center justify-center">
+                            <Key className="w-4 h-4 text-[#DDA15E]" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[#F4F4F9] text-[13px] font-semibold">{key.site}</span>
+                            <span className="text-[#8D99AE] text-[11px]">{key.username} • {key.type}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-[#8D99AE] text-[11px] hidden group-hover:block transition-all">Added {key.date}</span>
+                          <button className="text-[#8D99AE] hover:text-[#7E78D2] text-[12px] font-medium transition-colors">
+                            Manage
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* RAM Saver Modal */}
+      <AnimatePresence>
+        {ramSaverOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[120] backdrop-blur-sm bg-[#0E0E10]/80 flex items-center justify-center p-4"
+          >
+            <div className="w-full max-w-lg bg-[#14161D] border border-[#2A2E35] rounded-[24px] overflow-hidden shadow-2xl flex flex-col p-6">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#52B788]/10 border border-[#52B788]/30 flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-[#52B788]" />
+                  </div>
+                  <div>
+                    <h2 className="text-[#F4F4F9] text-lg font-bold">RAM Saver</h2>
+                    <p className="text-[#8D99AE] text-xs">Real-time memory allocation</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setRamSaverOpen(false)}
+                  className="w-8 h-8 rounded-full hover:bg-[#181A22] flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4 text-[#8D99AE]" />
+                </button>
+              </div>
+
+              <div className="flex justify-center mb-8 relative">
+                <RamSaverChart data={[
+                  { id: 'work', label: 'Work', value: 450, color: '#DDA15E' },
+                  { id: 'social', label: 'Social', value: 280, color: '#3D8D8B' },
+                  { id: 'writing', label: 'Writing', value: 120, color: '#7E78D2' },
+                  { id: 'shopping', label: 'Shopping', value: 95, color: '#52B788' }
+                ]} />
+              </div>
+
+              <div className="bg-[#101217] border border-[#2A2E35] rounded-xl p-4 flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[#F4F4F9] text-sm font-bold">Auto-Suspend Tabs</span>
+                  <span className="text-[#8D99AE] text-xs">Frees up memory from inactive islands</span>
+                </div>
+                <button 
+                  onClick={toggleMemorySaver}
+                  className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${memorySaver ? 'bg-[#52B788]' : 'bg-[#2A2E35]'}`}
+                >
+                  <motion.div 
+                    className="w-4 h-4 rounded-full bg-white shadow-sm"
+                    animate={{ x: memorySaver ? 24 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Shortcuts Modal */}
+      <AnimatePresence>
+        {shortcutsOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[120] backdrop-blur-sm bg-[#0E0E10]/80 flex items-center justify-center p-4"
+          >
+            <div className="w-full max-w-lg bg-[#14161D] border border-[#2A2E35] rounded-[24px] overflow-hidden shadow-2xl flex flex-col p-6">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#DDA15E]/10 border border-[#DDA15E]/30 flex items-center justify-center">
+                    <Code className="w-5 h-5 text-[#DDA15E]" />
+                  </div>
+                  <div>
+                    <h2 className="text-[#F4F4F9] text-lg font-bold">Keyboard Shortcuts</h2>
+                    <p className="text-[#8D99AE] text-xs">Custom global hotkeys</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShortcutsOpen(false)}
+                  className="w-8 h-8 rounded-full hover:bg-[#181A22] flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4 text-[#8D99AE]" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { id: 'newTab', label: 'New Tab', key: shortcuts.newTab },
+                  { id: 'toggleAura', label: 'Toggle Aura Sidebar', key: shortcuts.toggleAura },
+                  { id: 'nextWorkspace', label: 'Next Workspace', key: shortcuts.nextWorkspace },
+                  { id: 'prevWorkspace', label: 'Previous Workspace', key: shortcuts.prevWorkspace }
+                ].map((item) => (
+                  <div key={item.id} className="bg-[#101217] border border-[#2A2E35] rounded-xl p-4 flex items-center justify-between">
+                    <span className="text-[#F4F4F9] text-sm font-medium">{item.label}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="px-2 py-1 bg-[#181A22] border border-[#2A2E35] rounded text-[#8D99AE] text-xs font-mono">
+                        Cmd/Ctrl
+                      </div>
+                      <span className="text-[#8D99AE]">+</span>
+                      <input 
+                        type="text" 
+                        value={item.key.toUpperCase()}
+                        maxLength={1}
+                        onChange={(e) => setShortcuts(prev => ({ ...prev, [item.id]: e.target.value.toLowerCase() }))}
+                        className="w-8 h-8 bg-[#181A22] border border-[#DDA15E]/50 rounded text-center text-[#DDA15E] text-xs font-mono font-bold outline-none focus:border-[#DDA15E] focus:bg-[#DDA15E]/10 transition-colors"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
