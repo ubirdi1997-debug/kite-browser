@@ -1,12 +1,25 @@
 import React from 'react';
+import { motion } from 'motion/react';
 
 export function KiteLogo({ className = "w-12 h-12" }: { className?: string }) {
   return (
-    <svg 
+    <motion.svg 
       xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 100 100" 
+      viewBox="-10 -10 120 120" 
       className={className}
       fill="none"
+      animate={{
+        filter: [
+          'drop-shadow(0 0 4px rgba(221, 161, 94, 0.4))',
+          'drop-shadow(0 0 16px rgba(221, 161, 94, 0.9))',
+          'drop-shadow(0 0 4px rgba(221, 161, 94, 0.4))'
+        ]
+      }}
+      transition={{
+        duration: 2,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }}
     >
       <defs>
         <linearGradient id="kite-top" x1="15" y1="5" x2="85" y2="40" gradientUnits="userSpaceOnUse">
@@ -42,6 +55,6 @@ export function KiteLogo({ className = "w-12 h-12" }: { className?: string }) {
         <circle cx="50" cy="45" r="3.5" fill="#FF6B00" />
         <circle cx="50" cy="45" r="1.5" fill="#0E0E10" />
       </g>
-    </svg>
+    </motion.svg>
   );
 }

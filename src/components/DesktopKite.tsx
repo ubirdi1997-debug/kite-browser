@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
-import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar, UserCircle2 } from 'lucide-react';
 import { KiteLogo } from './KiteLogo';
 import { RamSaverChart, RamData } from './RamSaverChart';
 import { GestureCanvas } from './GestureCanvas';
@@ -467,10 +467,16 @@ export function DesktopKite() {
       {/* Window Top Header / Tabs */}
       <div className="h-12 bg-[#101217] flex items-center px-4 border-b border-[#2A2E35] shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Window Controls */}
-        <div className="hidden md:flex gap-2 mr-6">
-          <div className="w-3 h-3 rounded-full bg-[#2A2E35]" />
-          <div className="w-3 h-3 rounded-full bg-[#2A2E35]" />
-          <div className="w-3 h-3 rounded-full bg-[#2A2E35]" />
+        <div className="hidden md:flex gap-2 mr-6 group relative">
+          <button className="w-3.5 h-3.5 rounded-full bg-[#ff5f56] flex items-center justify-center border border-[#e0443e] overflow-hidden">
+            <X className="w-2.5 h-2.5 text-black/60 opacity-0 group-hover:opacity-100" />
+          </button>
+          <button className="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] flex items-center justify-center border border-[#dea123] overflow-hidden">
+            <span className="w-2 h-[2px] bg-black/60 opacity-0 group-hover:opacity-100" />
+          </button>
+          <button className="w-3.5 h-3.5 rounded-full bg-[#27c93f] flex items-center justify-center border border-[#1aab29] overflow-hidden">
+            <SplitSquareHorizontal className="w-2.5 h-2.5 text-black/60 opacity-0 group-hover:opacity-100 rotate-90" />
+          </button>
         </div>
 
         {/* Reorderable Tabs & Islands */}
@@ -790,6 +796,21 @@ export function DesktopKite() {
                       <div className="flex flex-col">
                         <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#DDA15E]">Keyboard Shortcuts</span>
                         <span className="text-[9px] text-[#8D99AE]">Custom global hotkeys</span>
+                      </div>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        const id = `t-${Date.now()}`;
+                        setTabs(prev => [...prev, { type: 'tab', id, title: 'Settings', url: 'chrome://settings', active: false }]);
+                        activateTab(id);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
+                      <Settings className="w-4 h-4 text-[#3D8D8B]" />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#3D8D8B]">Chromium Settings</span>
+                        <span className="text-[9px] text-[#8D99AE]">Advanced browser config</span>
                       </div>
                     </button>
                   </motion.div>
@@ -1319,7 +1340,7 @@ export function DesktopKite() {
                 }}
                 className="w-full py-3 bg-[#DDA15E] text-[#14161D] text-[13px] font-bold rounded-xl hover:bg-[#e0ae75] transition-all duration-300 flex items-center justify-center gap-2"
               >
-                <Fingerprint className="w-5 h-5" />
+                <UserCircle2 className="w-5 h-5" />
                 Continue with SSO
               </button>
             </div>

@@ -6,10 +6,11 @@
 import React, { useState } from 'react';
 import { DesktopKite } from './components/DesktopKite';
 import { MobileKite } from './components/MobileKite';
-import { Monitor, Smartphone } from 'lucide-react';
+import { Installer } from './components/Installer';
+import { Monitor, Smartphone, Download } from 'lucide-react';
 
 export default function App() {
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'installer'>('desktop');
 
   return (
     <div className="min-h-screen bg-[#0E0E10] flex flex-col font-sans text-[#F4F4F9]">
@@ -50,6 +51,17 @@ export default function App() {
             <Smartphone className="w-3.5 h-3.5" />
             Mobile View
           </button>
+          <button 
+            onClick={() => setViewMode('installer')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors ${
+              viewMode === 'installer' 
+                ? 'bg-[#2A2E35] text-[#F4F4F9]' 
+                : 'text-[#8D99AE] hover:text-[#F4F4F9]'
+            }`}
+          >
+            <Download className="w-3.5 h-3.5" />
+            Installer View
+          </button>
         </div>
       </header>
 
@@ -60,9 +72,13 @@ export default function App() {
           <div className="w-full max-w-6xl flex justify-center animate-in fade-in zoom-in-95 duration-300">
             <DesktopKite />
           </div>
-        ) : (
+        ) : viewMode === 'mobile' ? (
           <div className="w-full flex justify-center animate-in fade-in zoom-in-95 duration-300">
             <MobileKite />
+          </div>
+        ) : (
+          <div className="w-full flex justify-center animate-in fade-in zoom-in-95 duration-300">
+            <Installer />
           </div>
         )}
 
