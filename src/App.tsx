@@ -55,12 +55,12 @@ export default function App() {
             onClick={() => setViewMode('installer')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors ${
               viewMode === 'installer' 
-                ? 'bg-[#2A2E35] text-[#F4F4F9]' 
-                : 'text-[#8D99AE] hover:text-[#F4F4F9]'
+                ? 'bg-[#DDA15E] text-[#121214]' 
+                : 'text-[#DDA15E] hover:text-[#F4F4F9]'
             }`}
           >
             <Download className="w-3.5 h-3.5" />
-            Installer View
+            Download (EXE & APK)
           </button>
         </div>
       </header>

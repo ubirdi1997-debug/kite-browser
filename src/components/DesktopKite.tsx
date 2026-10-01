@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
-import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar, UserCircle2, Terminal, Minus, Square } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lock, Shield, Fingerprint, Activity, Cpu, Briefcase, PenTool, ShoppingBag, Users, BookMarked, MessageCircle, MessageSquare, BatteryMedium, Plus, Settings, SplitSquareHorizontal, Key, CreditCard, ShieldAlert, HardDrive, Waypoints, Ghost, Camera, RotateCcw, X, Wallet, Mail, VenetianMask, Search, Globe, Code, Music, Gamepad2, Coffee, MoonStar, UserCircle2, Terminal, Minus, Square, Download, Smartphone } from 'lucide-react';
 import { KiteLogo } from './KiteLogo';
 import { RamSaverChart, RamData } from './RamSaverChart';
 import { GestureCanvas } from './GestureCanvas';
+import { usafeAuth, USafeUser } from '../services/usafeAuth';
+import { web4Bridge, Web4MeshStatus } from '../services/web4Bridge';
+import { USafeAuthModal } from './USafeAuthModal';
+import { Web4MeshModal } from './Web4MeshModal';
+import { RELEASE_ASSETS, downloadReleaseAsset } from '../utils/downloader';
 
 type BaseTab = { id: string; title: string; active: boolean; isSecret?: boolean; url: string; suspended?: boolean };
 type TabNode = BaseTab & { type: 'tab' };
@@ -68,10 +73,28 @@ export function DesktopKite() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [snapshotSaved, setSnapshotSaved] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [currentUser, setCurrentUser] = useState<USafeUser | null>(usafeAuth.getCurrentUser());
+  const [isLoggedIn, setIsLoggedIn] = useState(usafeAuth.isAuthenticated());
+  const [showTutorial, setShowTutorial] = useState(!usafeAuth.isAuthenticated());
+  const [usafeModalOpen, setUsafeModalOpen] = useState(false);
+  const [web4MeshModalOpen, setWeb4MeshModalOpen] = useState(false);
+  const [meshStatus, setMeshStatus] = useState<Web4MeshStatus>(web4Bridge.getStatus());
   
   const [shortcuts, setShortcuts] = useState(DEFAULT_SHORTCUTS);
+
+  useEffect(() => {
+    const unsubAuth = usafeAuth.subscribe((u) => {
+      setCurrentUser(u);
+      setIsLoggedIn(!!u);
+    });
+    const unsubMesh = web4Bridge.subscribe((status) => {
+      setMeshStatus(status);
+    });
+    return () => {
+      unsubAuth();
+      unsubMesh();
+    };
+  }, []);
 
   const [gesture, setGesture] = useState<{
     active: boolean;
@@ -511,17 +534,40 @@ export function DesktopKite() {
           <Plus className="w-4 h-4" />
         </button>
 
-        {/* Window Controls (Native Windows Style) */}
-        <div className="ml-auto hidden md:flex items-center gap-1 shrink-0 pl-4">
-          <button className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#181A22] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors">
-            <Minus className="w-4 h-4" />
+        {/* Window Controls (Native Windows Style + Web4 Bridge) */}
+        <div className="ml-auto hidden md:flex items-center gap-2 shrink-0 pl-4">
+          <button
+            onClick={() => setWeb4MeshModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#181A22] border border-[#2A2E35] hover:border-[#52B788]/40 transition-colors text-[10px] font-mono text-[#8D99AE] hover:text-[#52B788]"
+            title="Open Web4 & Web3 Plus Mesh Topology"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#52B788] animate-pulse" />
+            <span>Web4 Node</span>
           </button>
-          <button className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#181A22] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors">
-            <Square className="w-3.5 h-3.5" />
-          </button>
-          <button className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-500 hover:text-white text-[#8D99AE] transition-colors">
-            <X className="w-4 h-4" />
-          </button>
+
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => web4Bridge.sendWindowControl('minimize')}
+              className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#181A22] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors"
+              title="Minimize"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => web4Bridge.sendWindowControl('maximize')}
+              className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#181A22] text-[#8D99AE] hover:text-[#F4F4F9] transition-colors"
+              title="Maximize"
+            >
+              <Square className="w-3.5 h-3.5" />
+            </button>
+            <button 
+              onClick={() => web4Bridge.sendWindowControl('close')}
+              className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-500 hover:text-white text-[#8D99AE] transition-colors"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -543,6 +589,10 @@ export function DesktopKite() {
             </div>
           ) : activeTab?.url.startsWith('kite://') ? (
             <Shield className="w-4 h-4 text-[#7E78D2] shrink-0" />
+          ) : (activeTab?.url.startsWith('web4://') || activeTab?.url.startsWith('web3p://')) ? (
+            <div className="flex items-center gap-1 shrink-0" title="Web4 Sovereign Protocol">
+              <Globe className="w-3.5 h-3.5 text-[#52B788]" />
+            </div>
           ) : (
             <Search className="w-4 h-4 text-[#8D99AE] shrink-0" />
           )}
@@ -551,16 +601,22 @@ export function DesktopKite() {
             type="text" 
             value={activeTab?.url || ''} 
             onChange={(e) => updateActiveTabUrl(e.target.value)}
-            placeholder="Search or enter address"
+            placeholder="Search or enter address (e.g. web4://mesh.core, https://...)"
             className="bg-transparent border-none outline-none text-[#F4F4F9] font-mono text-[11px] w-full ml-1 placeholder:text-[#8D99AE]"
           />
 
           {/* Dynamic Relay Indicator */}
-          <div className="ml-auto bg-[#1E222D] rounded-full px-3 py-1 flex items-center gap-1.5 h-6">
+          <button 
+            onClick={() => setWeb4MeshModalOpen(true)}
+            className="ml-auto bg-[#1E222D] hover:bg-[#252a37] transition-colors rounded-full px-3 py-1 flex items-center gap-1.5 h-6 cursor-pointer"
+            title="Inspect Web4 Mesh Node Routing"
+          >
             <Ghost className="w-3 h-3 text-[#7E78D2]" />
-            <div className="w-1.5 h-1.5 rounded-full bg-[#3D8D8B]" />
-            <span className="font-mono text-[7px] text-[#3D8D8B] tracking-wide opacity-80">ZURICH-04 Egress</span>
-          </div>
+            <div className={`w-1.5 h-1.5 rounded-full ${meshStatus.tunnelActive ? 'bg-[#52B788]' : 'bg-[#DDA15E]'}`} />
+            <span className="font-mono text-[7px] text-[#3D8D8B] tracking-wide opacity-90 uppercase">
+              {meshStatus.currentNode.split(' ')[0]} Egress
+            </span>
+          </button>
         </div>
 
         <button
@@ -702,17 +758,28 @@ export function DesktopKite() {
             {/* uAuth Anchor */}
             <div className="relative">
               <button 
-                onClick={() => setUauthOpen(!uAuthOpen)}
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    setUsafeModalOpen(true);
+                  } else {
+                    setUauthOpen(!uAuthOpen);
+                  }
+                }}
                 className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[#181A22] group transition-colors relative"
+                title={isLoggedIn ? `uSafe ID: ${currentUser?.handle || '@sovereign.kite'}` : "Sign in with uSafe Passkey"}
               >
                 {isLoggedIn ? (
                   <div className="w-5 h-5 rounded-full overflow-hidden ring-2 ring-[#52B788] ring-offset-2 ring-offset-[#101217]">
-                    <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="w-full h-full object-cover" />
+                    <img 
+                      src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                 ) : (
                   <>
-                    <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#0E0E10] z-10 bg-[#8D99AE]" />
-                    <UserCircle2 className="w-5 h-5 text-[#8D99AE]" strokeWidth={2} />
+                    <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#0E0E10] z-10 bg-[#DDA15E]" />
+                    <UserCircle2 className="w-5 h-5 text-[#8D99AE] group-hover:text-[#F4F4F9]" strokeWidth={2} />
                   </>
                 )}
               </button>
@@ -724,31 +791,71 @@ export function DesktopKite() {
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     exit={{ opacity: 0, x: -10, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute bottom-0 left-[60px] w-[240px] bg-[#101217] border border-[#2A2E35] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-2 z-50 flex flex-col gap-1"
+                    className="absolute bottom-0 left-[60px] w-[260px] bg-[#101217] border border-[#2A2E35] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-2 z-50 flex flex-col gap-1"
                   >
-                    <div className="px-3 py-2 border-b border-[#2A2E35] mb-1">
-                      <span className="text-[10px] text-[#8D99AE] font-mono tracking-wide uppercase">uAuth Identity</span>
+                    <div className="px-3 py-2 border-b border-[#2A2E35] mb-1 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-[#8D99AE] font-mono tracking-wide uppercase block">uSafe Sovereign ID</span>
+                        <span className="text-[12px] font-bold text-[#52B788] font-mono">{currentUser?.handle || '@sovereign.kite'}</span>
+                      </div>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#DDA15E]/15 text-[#DDA15E] border border-[#DDA15E]/30 uppercase font-bold">
+                        {currentUser?.tier || 'PRO'}
+                      </span>
                     </div>
-                    <button className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group">
+
+                    <button 
+                      onClick={() => {
+                        setUauthOpen(false);
+                        setUsafeModalOpen(true);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
                       <Key className="w-4 h-4 text-[#DDA15E]" />
                       <div className="flex flex-col">
                         <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#DDA15E]">Hardware Passkeys</span>
-                        <span className="text-[9px] text-[#8D99AE]">StrongBox Ed25519</span>
+                        <span className="text-[9px] text-[#8D99AE]">WebAuthn • auth.usafe.in</span>
                       </div>
                     </button>
-                    <button className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group">
-                      <CreditCard className="w-4 h-4 text-[#52B788]" />
+
+                    <button 
+                      onClick={() => {
+                        setUauthOpen(false);
+                        setWeb4MeshModalOpen(true);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
+                      <Waypoints className="w-4 h-4 text-[#52B788]" />
                       <div className="flex flex-col">
-                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#52B788]">uPay Methods</span>
-                        <span className="text-[9px] text-[#8D99AE]">Zero-Knowledge Payments</span>
+                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#52B788]">Web4 Mesh Topology</span>
+                        <span className="text-[9px] text-[#8D99AE]">OpenClaw Egress Routing</span>
                       </div>
                     </button>
-                    <button className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group">
-                      <ShieldAlert className="w-4 h-4 text-[#3D8D8B]" />
+
+                    <button 
+                      onClick={() => {
+                        setUauthOpen(false);
+                        setUsafeModalOpen(true);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
+                      <Terminal className="w-4 h-4 text-[#7E78D2]" />
                       <div className="flex flex-col">
-                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#3D8D8B]">Legacy Passwords</span>
-                        <span className="text-[9px] text-[#8D99AE]">TPM Enclave Encryption</span>
+                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#7E78D2]">Token Inspector</span>
+                        <span className="text-[9px] text-[#8D99AE]">ES256 Claims & PASETO</span>
                       </div>
+                    </button>
+
+                    <div className="h-[1px] bg-[#2A2E35] my-1" />
+
+                    <button 
+                      onClick={() => {
+                        setUauthOpen(false);
+                        usafeAuth.logout();
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-1.5 hover:bg-rose-950/20 text-rose-400 hover:text-rose-300 rounded-lg transition-colors text-left group text-[11px]"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Disconnect Session</span>
                     </button>
                   </motion.div>
                 )}
@@ -831,6 +938,38 @@ export function DesktopKite() {
                         <span className="text-[9px] text-[#8D99AE]">Advanced browser config</span>
                       </div>
                     </button>
+
+                    <div className="h-[1px] bg-[#2A2E35] my-1" />
+
+                    <button 
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        const winAsset = RELEASE_ASSETS.find(a => a.platform === 'windows') || RELEASE_ASSETS[0];
+                        downloadReleaseAsset(winAsset);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
+                      <Download className="w-4 h-4 text-[#DDA15E]" />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#DDA15E]">Windows Setup</span>
+                        <span className="text-[9px] text-[#8D99AE]">Kite-Setup.bat (One-Click)</span>
+                      </div>
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        const apkAsset = RELEASE_ASSETS.find(a => a.platform === 'android') || RELEASE_ASSETS[1];
+                        downloadReleaseAsset(apkAsset);
+                      }}
+                      className="flex items-center gap-3 w-full px-3 py-2 hover:bg-[#181A22] rounded-lg transition-colors text-left group"
+                    >
+                      <Smartphone className="w-4 h-4 text-[#52B788]" />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-[#F4F4F9] font-medium group-hover:text-[#52B788]">Android App (WebAPK)</span>
+                        <span className="text-[9px] text-[#8D99AE]">Direct Home Screen Install</span>
+                      </div>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -898,6 +1037,63 @@ export function DesktopKite() {
                     <Settings className="w-16 h-16 text-[#2A2E35] mb-6" />
                     <h1 className="text-[#F4F4F9] text-2xl font-extrabold mb-2">Internal System Config</h1>
                     <p className="text-[#8D99AE] text-[12px] font-mono tracking-widest">{activeTab.url}</p>
+                  </div>
+                ) : (activeTab?.url.startsWith('web4://') || activeTab?.url.startsWith('web3p://')) ? (
+                  <div className="p-10 flex-1 flex flex-col justify-start">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#52B788]/15 border border-[#52B788]/30 flex items-center justify-center">
+                        <Globe className="w-5 h-5 text-[#52B788]" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h1 className="text-[#F4F4F9] text-2xl font-extrabold tracking-tight">Web4 Sovereign dApp Gateway</h1>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#52B788]/10 text-[#52B788] border border-[#52B788]/30 font-bold uppercase">
+                            Zero-Telemetry Encrypted
+                          </span>
+                        </div>
+                        <p className="text-[#8D99AE] text-xs font-mono mt-0.5">Resolved via: {activeTab.url}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 my-6">
+                      <div className="p-4 bg-[#101217] border border-[#2A2E35] rounded-xl">
+                        <span className="text-[10px] text-[#8D99AE] font-mono block">Passkey Session</span>
+                        <span className="text-xs font-bold text-[#52B788] mt-1 flex items-center gap-1.5 truncate">
+                          <Key className="w-3.5 h-3.5 shrink-0" />
+                          {currentUser ? currentUser.handle : 'Anonymous Mesh'}
+                        </span>
+                      </div>
+                      <div className="p-4 bg-[#101217] border border-[#2A2E35] rounded-xl">
+                        <span className="text-[10px] text-[#8D99AE] font-mono block">Relay Node</span>
+                        <span className="text-xs font-bold text-[#DDA15E] mt-1 flex items-center gap-1.5 truncate">
+                          <Waypoints className="w-3.5 h-3.5 shrink-0" />
+                          {meshStatus.currentNode}
+                        </span>
+                      </div>
+                      <div className="p-4 bg-[#101217] border border-[#2A2E35] rounded-xl">
+                        <span className="text-[10px] text-[#8D99AE] font-mono block">Egress Tunnel</span>
+                        <span className="text-xs font-bold text-[#7E78D2] mt-1 flex items-center gap-1.5 truncate">
+                          <Lock className="w-3.5 h-3.5 shrink-0" />
+                          {meshStatus.tunnelActive ? 'XChaCha20-Poly' : 'Bypass Active'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#101217] border border-[#2A2E35] rounded-2xl p-6 mb-6">
+                      <h3 className="text-sm font-bold text-[#F4F4F9] mb-2 flex items-center gap-2">
+                        <Cpu className="w-4 h-4 text-[#52B788]" />
+                        Sovereign Execution Sandbox
+                      </h3>
+                      <p className="text-xs text-[#8D99AE] leading-relaxed mb-4">
+                        This decentralized Web4 application is sandboxed within the Kite Chromium isolate. All scripts execute locally with hardware-enforced memory safety, zero analytics, and deterministic DNS resolving over OpenClaw.
+                      </p>
+                      <div className="p-3 bg-[#0E0E10] border border-[#2A2E35] rounded-xl font-mono text-[11px] text-[#52B788] flex items-center justify-between">
+                        <span>Payload Integrity: SHA256-verified • WebAuthn Verified Signer</span>
+                        <button onClick={() => setWeb4MeshModalOpen(true)} className="text-[10px] text-[#DDA15E] hover:underline cursor-pointer">
+                          View Node Peers →
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="p-10">
@@ -1340,31 +1536,70 @@ export function DesktopKite() {
           <motion.div 
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[100] backdrop-blur-md bg-[#0E0E10]/80 flex items-center justify-center"
+            className="absolute inset-0 z-[100] backdrop-blur-md bg-[#0E0E10]/85 flex items-center justify-center p-4"
           >
-            <div className="w-[420px] bg-[#14161D] border border-[#7E78D2]/30 rounded-[24px] p-8 flex flex-col items-center shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden">
+            <div className="w-[440px] bg-[#14161D] border border-[#7E78D2]/30 rounded-[28px] p-8 flex flex-col items-center shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#DDA15E] via-[#52B788] to-[#7E78D2]" />
-              <div className="w-16 h-16 rounded-full bg-[#181A22] border border-[#2A2E35] flex items-center justify-center mb-6">
-                <Shield className="w-8 h-8 text-[#7E78D2]" />
+              <div className="w-16 h-16 rounded-full bg-[#181A22] border border-[#2A2E35] flex items-center justify-center mb-6 shadow-inner">
+                <Shield className="w-8 h-8 text-[#52B788]" />
               </div>
-              <h2 className="text-[#F4F4F9] text-2xl font-extrabold mb-3 text-center">Welcome to uSafe One</h2>
-              <p className="text-[#8D99AE] text-[13px] text-center mb-8 leading-relaxed">
-                Sign up with your SSO provider to instantly sync your workspaces and establish your encrypted mesh session.
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-[#F4F4F9] text-2xl font-extrabold text-center">Welcome to Kite</h2>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#52B788]/15 text-[#52B788] border border-[#52B788]/30 font-bold uppercase">
+                  Web4 Mesh
+                </span>
+              </div>
+              <p className="text-[#8D99AE] text-[13px] text-center mb-6 leading-relaxed">
+                Connect your sovereign identity using WebAuthn/FIDO2 passkeys to unlock encrypted workspaces, decentralized browsing, and zero-telemetry egress.
               </p>
-              <button 
-                onClick={() => {
-                  setIsLoggedIn(true);
-                  setShowTutorial(false);
-                }}
-                className="w-full py-3 bg-[#DDA15E] text-[#14161D] text-[13px] font-bold rounded-xl hover:bg-[#e0ae75] transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <UserCircle2 className="w-5 h-5" />
-                Continue with SSO
-              </button>
+
+              <div className="w-full space-y-3">
+                <button 
+                  onClick={() => {
+                    setShowTutorial(false);
+                    setUsafeModalOpen(true);
+                  }}
+                  className="w-full py-3.5 bg-[#DDA15E] text-[#14161D] text-[13px] font-bold rounded-xl hover:bg-[#e0ae75] transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(221,161,94,0.25)] cursor-pointer"
+                >
+                  <Key className="w-4 h-4" />
+                  Sign in with uSafe Passkey (FIDO2)
+                </button>
+
+                <button 
+                  onClick={async () => {
+                    await usafeAuth.signInWithPasskey('@sovereign.kite');
+                    setShowTutorial(false);
+                  }}
+                  className="w-full py-3 bg-[#181A22] border border-[#2A2E35] hover:border-[#52B788]/50 text-[#F4F4F9] text-[12px] font-semibold rounded-xl hover:bg-[#1f222d] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Waypoints className="w-4 h-4 text-[#52B788]" />
+                  Quick Connect to Web4 / Web3 Plus
+                </button>
+              </div>
+
+              <div className="mt-6 flex items-center gap-2 text-[11px] text-[#8D99AE] font-mono">
+                <Lock className="w-3.5 h-3.5 text-[#52B788]" />
+                <span>Issuer: auth.usafe.in • ES256 / PASETO</span>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* uSafe Auth Passkey & Token Inspector Modal */}
+      <USafeAuthModal
+        isOpen={usafeModalOpen}
+        onClose={() => setUsafeModalOpen(false)}
+        onSuccess={() => {
+          setIsLoggedIn(true);
+        }}
+      />
+
+      {/* Web4 & Web3 Plus Mesh Topology Modal */}
+      <Web4MeshModal
+        isOpen={web4MeshModalOpen}
+        onClose={() => setWeb4MeshModalOpen(false)}
+      />
     </div>
   );
 }

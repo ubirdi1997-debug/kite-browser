@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "Kite Browser",
+  "short_name": "Kite",
+  "description": "Tactical Obsidian Chrome - Zero-Telemetry Sovereign Browser Sandbox",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0E0E10",
+  "background_color": "#0E0E10",
+  "icons": [
+    {
+      "src": "/kite-icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/kite-icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/kite-icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"]
+}
